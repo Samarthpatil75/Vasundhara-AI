@@ -1,0 +1,15 @@
+hazard_type,feature_name,data_source,category,importance_score,impact_direction,description
+Heatwave,Land Surface Temp (MODIS LST via AppEEARS),MODIS LST (AppEEARS),Thermal Satellite,0.284,Increases Risk,Surface thermal radiance capturing diurnal concrete and asphalt heat accumulation.
+Heatwave,Built-Up Surface Ratio (ESA WorldCover),ESA WorldCover,Land Cover,0.221,Increases Risk,Proportion of impervious artificial surfaces driving the Urban Heat Island (UHI).
+Heatwave,Vegetation Index (NASA AppEEARS MODIS NDVI),NASA AppEEARS (MODIS),Vegetation Remote Sensing,0.192,Decreases Risk,Photosynthetic tree canopy density providing evapotranspiration and microclimate cooling.
+Heatwave,2m Air Temperature (Open-Meteo Historical API),Open-Meteo Historical API,Meteorology Reanalysis,0.128,Increases Risk,Near-surface ambient air temperature from daily ERA5-quality historical reanalysis.
+Heatwave,Population Exposure Density (WorldPop),WorldPop,Demographics,0.089,Increases Risk,Gridded human settlement density exposing large populations to physiological heat stress.
+Heatwave,Elevation (SRTM via Google Earth Engine),SRTM via GEE,Topography,0.051,Decreases Risk,Lapse-rate atmospheric cooling associated with Western Ghats high elevations.
+Heatwave,Relative Humidity (Open-Meteo Historical API),Open-Meteo Historical API,Meteorology Reanalysis,0.035,Increases Risk (Heat Index),Atmospheric moisture amplifying perceived wet-bulb heat index.
+Flood,24h Peak Precipitation (Open-Meteo / IMD Gridded),Open-Meteo / IMD Gridded Rainfall,Meteorology Reanalysis,0.302,Increases Risk,Short-duration extreme precipitation intensity triggering flash stormwater inundation.
+Flood,Topographic Wetness & Slope (SRTM via GEE),SRTM via GEE,Topography / Hydrology,0.228,Increases Risk,Shuttle Radar Topography Mission DEM terrain depressions with low gravity drainage slope.
+Flood,Riparian Inundation Zone (Dartmouth Flood Observatory),Dartmouth Flood Observatory (DFO),Disaster Validation,0.178,Increases Risk,Proximity to historical flood extents mapped along the Mula-Mutha river system.
+Flood,Impervious Pavement Fraction (ESA WorldCover),ESA WorldCover,Land Cover,0.134,Increases Risk,Sealed soil coverage generating rapid surface runoff during cloudbursts.
+Flood,Vulnerable Population Density (WorldPop),WorldPop,Demographics,0.082,Increases Risk,Count of residents living in low-lying riparian flood-hazard corridors.
+Flood,Terrain Slope Gradient (SRTM via GEE),SRTM via GEE,Topography,0.052,Decreases Risk,"Steeper slopes facilitate rapid gravity discharge, reducing localized standing flood depth."
+Flood,Riparian Canopy Buffer (NASA AppEEARS NDVI),NASA AppEEARS (MODIS),Vegetation Remote Sensing,0.024,Decreases Risk,Riverbank vegetative buffer attenuating runoff velocity and soil erosion.
