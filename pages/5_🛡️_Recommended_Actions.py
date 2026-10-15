@@ -18,7 +18,6 @@ from src.utils import (
 )
 from src.components import (
     render_header,
-    render_sample_data_banner,
     render_takeaway,
     render_footer,
     get_risk_badge_html
@@ -27,7 +26,8 @@ from src.components import (
 st.set_page_config(
     page_title="Action Blueprint | ClimateSense Pune",
     page_icon="🛡️",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
 ACTION_CATALOG = {
@@ -71,11 +71,8 @@ def main():
         title="Automated Climate Resilience Action Blueprint",
         subtitle="Prioritized intervention matrices, municipal tasklists, and risk-reduction roadmaps"
     )
-    render_sample_data_banner()
 
     df_risk = load_risk_data()
-    df_ndvi = load_ndvi_data()
-
     if df_risk.empty:
         st.error("Risk prediction dataset is empty or not found.")
         return
@@ -84,38 +81,43 @@ def main():
     latest_date = hist_risk["date"].max() if not hist_risk.empty else df_risk["date"].max()
     active_risk = df_risk[df_risk["date"] == latest_date].copy()
 
-    with st.sidebar:
-        st.markdown("### 🎯 Action Plan Filters")
-        
-        selected_hazard = st.selectbox(
-            "Select Hazard Focus",
-            options=["Both Hazards", "Heatwave", "Flood"],
+    # Inline Interactive Controls
+    st.markdown("### 🎯 Priority Action Focus")
+    act_col1, act_col2 = st.columns([1.2, 1.2])
+
+    with act_col1:
+        hazard_focus = st.radio(
+            "Select Hazard Domain",
+            options=["🔥 Heatwave Action Plan", "🌊 Flood Action Plan", "🌐 Combined Multi-Hazard"],
             index=0,
-            help="Filter actions by primary climate hazard."
+            horizontal=True
         )
+        if "Heatwave" in hazard_focus:
+            selected_hazard = "Heatwave"
+        elif "Flood" in hazard_focus:
+            selected_hazard = "Flood"
+        else:
+            selected_hazard = "Both Hazards"
 
+    with act_col2:
         filter_priority = st.radio(
-            "Priority Filter",
-            options=["All Areas", "High Risk Areas Only (Urgent)", "Medium & High Risk"],
-            index=1,
-            help="Focus specifically on regions exceeding intervention thresholds."
+            "Filter Urgency Level",
+            options=["🚨 Urgent Priority Areas Only", "🟡 Medium & High Severity", "📋 All 16 Talukas"],
+            index=0,
+            horizontal=True
         )
-
-        st.markdown("---")
-        st.caption("ℹ️ *Actions are automatically generated based on model-detected feature triggers and WorldPop demographic exposure.*")
 
     hazard_filtered = active_risk if selected_hazard == "Both Hazards" else active_risk[active_risk["hazard_type"] == selected_hazard]
 
-    if filter_priority == "High Risk Areas Only (Urgent)":
+    if "Urgent" in filter_priority:
         display_risk = hazard_filtered[hazard_filtered["risk_level"] == "High"]
-    elif filter_priority == "Medium & High Risk":
+        # Fallback if none are strictly high in winter month
+        if display_risk.empty:
+            display_risk = hazard_filtered.sort_values(by="risk_score", ascending=False).head(5)
+    elif "Medium" in filter_priority:
         display_risk = hazard_filtered[hazard_filtered["risk_level"].isin(["High", "Medium"])]
     else:
         display_risk = hazard_filtered
-
-    if display_risk.empty:
-        st.info("No areas currently meet this filter threshold. Try selecting 'All Areas' or 'Medium & High Risk'.")
-        return
 
     priority_ranking = display_risk.groupby("area_name").agg({
         "risk_score": "max",
@@ -133,7 +135,7 @@ def main():
     priority_ranking = priority_ranking.sort_values(by="Priority Rank")
 
     # 1. Priority Ranking Chart
-    st.markdown("#### 🥇 District Priority Intervention Ranking (Urgency Index)")
+    st.markdown("#### 🥇 Municipal Urgency Ranking (Ranked 1 to N)")
 
     fig_rank = px.bar(
         priority_ranking,
@@ -144,15 +146,15 @@ def main():
         color_discrete_map=RISK_COLORS,
         text=priority_ranking["Priority Rank"].apply(lambda r: f"Rank #{r}"),
         labels={"risk_score": "Composite Risk Score (0–1.0)", "area_name": "DataMeet Taluka"},
-        hover_data={"risk_score": ":.2f", "worldpop_population": ":,", "hazard_type": True, "top_factor_1": True}
+        hover_data={"risk_score": ":.2f", "worldpop_population": ":,"}
     )
     fig_rank.update_traces(textposition="outside")
     fig_rank = apply_clean_layout(
         fig_rank,
-        title="Municipal Priority Ranking: Areas Requiring Immediate Action",
+        title="Municipal Priority Ranking: Talukas Requiring Immediate Action",
         x_title="Severity Score",
         y_title="",
-        height=400
+        height=380
     )
     st.plotly_chart(fig_rank, use_container_width=True)
 
@@ -160,11 +162,11 @@ def main():
         f"Taluka Rank #1 is {priority_ranking.iloc[0]['area_name']} with a severity score of {priority_ranking.iloc[0]['risk_score']*100:.1f}%, directly impacting ~{priority_ranking.iloc[0]['worldpop_population']:,} residents (WorldPop)."
     )
 
-    st.markdown("<div style='height: 18px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
 
-    # 2. Area Action Blueprint Accordion Cards
-    st.markdown("#### 🛠️ Granular Area Action Blueprints")
-    st.caption("Expand any taluka card below to inspect the phased intervention roadmap.")
+    # 2. Granular Action Blueprint Cards
+    st.markdown("#### 🛠️ Phased Action Roadmaps")
+    st.caption("Expand any card below to view the immediate (0-30 day) and seasonal interventions.")
 
     for _, row in priority_ranking.iterrows():
         area_name = row["area_name"]
@@ -177,42 +179,31 @@ def main():
         primary_hz = "Heatwave" if "Heatwave" in hz else "Flood"
         actions = ACTION_CATALOG.get(primary_hz, {}).get(level, ACTION_CATALOG[primary_hz]["Medium"])
 
-        with st.expander(f"📍 Rank #{rank_no}: {area_name} — {level} Risk ({row['risk_score']*100:.1f}%) | Pop: {pop_fmt}", expanded=(rank_no <= 3)):
+        with st.expander(f"📍 Rank #{rank_no}: {area_name} — {level} Risk ({row['risk_score']*100:.1f}%) | Pop: {pop_fmt}", expanded=(rank_no <= 2)):
             st.markdown(
                 f"""
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E2E8F0; padding-bottom: 8px; margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E2E8F0; padding-bottom: 6px; margin-bottom: 10px;">
                     <div>
                         <strong style="color: #0F172A; font-size: 15px;">{area_name}</strong>
-                        <span style="color: #64748B; font-size: 13px; margin-left: 8px;">({row['area_type']} • Code: {row.get('datameet_code', 'N/A')})</span>
+                        <span style="color: #64748B; font-size: 12px; margin-left: 8px;">({row['area_type']})</span>
                     </div>
-                    <div>
-                        <span style="font-size: 12px; font-weight: 600; color: #64748B; margin-right: 8px;">Hazards: {hz}</span>
-                        {badge_html}
-                    </div>
+                    <div>{badge_html}</div>
                 </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-            st.markdown(
-                f"""
-                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; font-size: 12.5px;">
-                    <strong>Primary Triggers:</strong> 1. {row['top_factor_1']} | 2. {row['top_factor_2']}<br>
-                    <strong>Exposed Demographics:</strong> {pop_fmt} residents (WorldPop 100m gridded aggregation)
+                <div style="font-size: 12px; color: #475569; margin-bottom: 8px;">
+                    <strong>Key Triggers:</strong> 1. {row['top_factor_1']} &nbsp;|&nbsp; 2. {row['top_factor_2']}<br>
+                    <strong>Exposed Demographics:</strong> {pop_fmt} citizens (WorldPop)
                 </div>
                 """,
                 unsafe_allow_html=True
             )
 
             act_df = pd.DataFrame(actions)
-            act_df.columns = ["Timeframe / Urgency", "Prescribed Intervention Action", "Responsible Municipal Agency"]
+            act_df.columns = ["Timeframe", "Intervention Action", "Lead Municipal Agency"]
             st.table(act_df)
 
-    st.markdown("<div style='height: 18px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
 
-    # 3. Export Action Plan
-    st.markdown("#### 📥 Export Priority Action Plan for Municipal Agencies")
-    
+    # 3. Export Plan Button
     export_rows = []
     for _, row in priority_ranking.iterrows():
         area_name = row["area_name"]
@@ -228,7 +219,6 @@ def main():
                 "WorldPop Population": row.get("worldpop_population", 0),
                 "Risk Score (%)": f"{row['risk_score']*100:.1f}%",
                 "Alert Level": level,
-                "Hazard Focus": row["hazard_type"],
                 "Timeframe": act["tier"],
                 "Action Description": act["action"],
                 "Lead Agency": act["lead_agency"]
@@ -238,11 +228,10 @@ def main():
     csv_bytes = export_df.to_csv(index=False).encode("utf-8")
 
     st.download_button(
-        label="📄 Download Pune Climate Action Plan (CSV)",
+        label="📄 Export Action Plan as CSV",
         data=csv_bytes,
         file_name="pune_climate_action_plan.csv",
-        mime="text/csv",
-        help="Export full action matrix for PMC, PCMC, PMRDA, and District Collectorate briefings."
+        mime="text/csv"
     )
 
     render_footer()

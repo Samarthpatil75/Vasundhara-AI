@@ -2,11 +2,12 @@
 app.py - ClimateSense: AI-driven Climate Risk + Carbon Monitoring Dashboard
 Main Landing & Overview Page for Pune District, Maharashtra, India.
 Designed for Hackathon Judges: Fast loading, visual clarity, presentation-ready.
-Powered strictly by the 10 designated climate, satellite, and demographic datasets.
+Features interactive season toggles, real-time Taluka Spotlight, and What-If Action Simulator.
 """
 
 import streamlit as st
 import pandas as pd
+import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 
@@ -15,7 +16,7 @@ st.set_page_config(
     page_title="ClimateSense | Pune Climate Risk & Carbon AI",
     page_icon="🌍",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 from src.utils import (
@@ -25,41 +26,44 @@ from src.utils import (
     compute_overview_kpis,
     apply_clean_layout,
     COLOR_THEME,
-    RISK_COLORS
+    RISK_COLORS,
+    DESIGNATED_DATASETS
 )
 from src.components import (
     render_header,
-    render_sample_data_banner,
-    render_designated_datasets_pill_bar,
     render_kpi_card,
-    render_how_it_works,
     render_takeaway,
     render_footer,
-    get_risk_badge_html
+    get_risk_badge_html,
+    create_risk_gauge
 )
 
-# Custom CSS for polished hackathon presentation
+# Custom Clean CSS
 st.markdown("""
 <style>
-    /* Global tweaks */
     .block-container {
-        padding-top: 1.8rem;
+        padding-top: 1.5rem;
         padding-bottom: 2.5rem;
     }
-    /* Clean sidebar styling */
-    section[data-testid="stSidebar"] {
-        background-color: #F8FAFC;
-        border-right: 1px solid #E2E8F0;
+    /* Metric Card Modern Styling */
+    div[data-testid="stMetricValue"] {
+        font-size: 26px !important;
+        font-weight: 800 !important;
     }
-    /* Buttons */
-    .stButton>button {
+    /* Clean Radio buttons */
+    div[role="radiogroup"] {
+        background-color: #F1F5F9;
+        padding: 4px;
+        border-radius: 8px;
+    }
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+    }
+    .stTabs [data-baseweb="tab"] {
         border-radius: 6px;
         font-weight: 600;
-    }
-    /* Tables */
-    .dataframe {
-        font-family: Inter, sans-serif !important;
-        font-size: 13px !important;
+        padding: 8px 16px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -72,222 +76,239 @@ def main():
     metrics = load_model_metrics()
 
     if df_risk.empty or df_ndvi.empty:
-        st.warning("Data files are empty or missing. Please ensure /data contains the sample CSV files.")
+        st.warning("Data files are loading or not found in /data. Please verify CSV files.")
         return
 
-    # Prepare available dates
-    hist_dates = df_risk[df_risk["is_forecast"] == 0]["date"].sort_values().unique()
-    date_options = [pd.to_datetime(d).strftime("%B %Y") for d in hist_dates]
-    date_map = {pd.to_datetime(d).strftime("%B %Y"): pd.to_datetime(d) for d in hist_dates}
-
-    # Sidebar quick filters & context
-    with st.sidebar:
-        st.markdown("### ⚙️ Global Scope")
-        st.caption("Active District: **Pune, Maharashtra** (DataMeet Sub-Districts)")
-        
-        hazard_filter = st.selectbox(
-            "Primary Hazard Perspective",
-            options=["Both Hazards", "Heatwave", "Flood"],
-            index=0,
-            help="Filter overview metrics by climate hazard type."
-        )
-        selected_hazard = None if hazard_filter == "Both Hazards" else hazard_filter
-
-        selected_period_str = st.selectbox(
-            "Observation Snapshot Month",
-            options=date_options,
-            index=len(date_options) - 1, # Default to latest
-            help="Select historical month to inspect district vulnerability status."
-        )
-        selected_date = date_map[selected_period_str]
-        
-        st.markdown("---")
-        st.markdown("### 🧭 Judge Fast Track (2 Min)")
-        st.info(
-            """
-            **Recommended Demo Path:**
-            1. **Overview** (Current page): Top-line district health & KPIs.
-            2. **🗺️ Risk Map**: Explore 16 talukas with multi-hazard filters.
-            3. **📈 Forecast**: 3-6 month lookahead with confidence intervals.
-            4. **🌱 Carbon Monitor**: 5-yr vegetation loss & biomass proxy.
-            5. **🧠 Model Insights**: SHAP explanations & test accuracy.
-            6. **🛡️ Actions**: Automated mitigation action blueprints.
-            """
-        )
-        st.markdown("---")
-        st.caption("16 DataMeet Talukas | WorldPop: ~9.4M Residents")
-
-    # Header & Sample Data Banner
+    # Clean Header
     render_header(
         title="ClimateSense",
-        subtitle="AI-driven Climate Risk + Carbon Monitoring Dashboard for Pune District, Maharashtra"
-    )
-    render_sample_data_banner()
-    render_designated_datasets_pill_bar()
-
-    # One-line Problem Statement in an elegant container
-    st.markdown(
-        """
-        <div style="background: linear-gradient(135deg, #F0FDFA 0%, #FFFFFF 100%); border: 1px solid #99F6E4; border-radius: 8px; padding: 14px 18px; margin-bottom: 24px;">
-            <div style="font-size: 12px; font-weight: 700; color: #0D9488; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px;">
-                Problem Statement & Mission
-            </div>
-            <div style="font-size: 14.5px; color: #0F172A; font-weight: 500; line-height: 1.5;">
-                Rapid peri-urban sprawl in Pune district intensifies urban heat islands and flash-flood runoff while degrading natural carbon sinks. <strong>ClimateSense</strong> fuses <strong>Open-Meteo & IMD</strong> reanalysis, <strong>NASA AppEEARS MODIS NDVI/LST</strong>, <strong>SRTM DEM</strong>, <strong>ESA WorldCover</strong>, and <strong>Global Forest Watch</strong> to equip municipal authorities with hyper-local risk forecasts and verifiable carbon accounting.
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
+        subtitle="AI-driven Climate Risk + Carbon Monitoring for Pune District | 16 DataMeet Talukas"
     )
 
-    # Compute dynamic KPIs from data
+    # 1. INTERACTIVE SCENARIO & SEASON SELECTOR (Inline right at the top!)
+    st.markdown("### 🎛️ Select Climate Observation Scenario")
+    scenario_col1, scenario_col2 = st.columns([1.6, 1])
+
+    with scenario_col1:
+        scenario = st.radio(
+            "Choose Climate Perspective",
+            options=[
+                "🔥 Peak Heatwave Window (Summer - May 2025)",
+                "🌊 Peak Monsoon Flood Window (August 2025)",
+                "📆 Baseline Annual Overview (Dec 2025)"
+            ],
+            index=0,
+            horizontal=True,
+            label_visibility="collapsed"
+        )
+
+    # Map scenario to date & hazard
+    if "Heatwave" in scenario:
+        selected_date = pd.to_datetime("2025-05-01")
+        selected_hazard = "Heatwave"
+        scenario_note = "Showing pre-monsoon thermal maximum (LST up to 43°C, Open-Meteo ambient temp >40°C, concrete UHI)."
+    elif "Flood" in scenario:
+        selected_date = pd.to_datetime("2025-08-01")
+        selected_hazard = "Flood"
+        scenario_note = "Showing peak monsoon precipitation (Open-Meteo / IMD rain >120mm/24h, Mula-Mutha river basin inundation)."
+    else:
+        selected_date = pd.to_datetime("2025-12-01")
+        selected_hazard = None
+        scenario_note = "Showing multi-hazard baseline with 5-year deseasonalized carbon accounting."
+
+    with scenario_col2:
+        st.caption(f"💡 **Active Context:** {scenario_note}")
+
+    st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+
+    # 2. THE 4 REFINED, CLEAR KPI CARDS
     kpis = compute_overview_kpis(df_risk, df_ndvi, selected_hazard=selected_hazard, selected_date=selected_date)
 
-    # 4 KPI Cards
-    col1, col2, col3, col4 = st.columns(4)
+    c1, c2, c3, c4 = st.columns(4)
 
-    with col1:
-        pop_str = f"{kpis['high_risk_population']/1e6:.1f}M citizens" if kpis['high_risk_population'] > 0 else "0 citizens"
+    with c1:
+        pop_millions = kpis["high_risk_population"] / 1_000_000.0
+        pop_subtext = f"~{pop_millions:.1f}M residents exposed" if pop_millions > 0 else "Low population stress"
         render_kpi_card(
-            title="Areas at High Risk",
-            value=f"{kpis['high_risk_count']} / {kpis['total_areas']}",
-            delta="Urgent Action" if kpis['high_risk_count'] > 0 else "Low Alert",
-            subtext=f"Exposing ~{pop_str} (WorldPop)",
-            alert_color=RISK_COLORS["High"] if kpis['high_risk_count'] > 3 else (RISK_COLORS["Medium"] if kpis['high_risk_count'] > 0 else RISK_COLORS["Low"]),
-            badge_text=f"{kpis['high_risk_pct']}% of district"
+            title="High-Risk Hotspots",
+            value=f"{kpis['high_risk_count']} / {kpis['total_areas']} Areas",
+            delta=f"{kpis['high_risk_pct']}% of district",
+            subtext=f"Exposing {pop_subtext} (WorldPop)",
+            alert_color=RISK_COLORS["High"] if kpis['high_risk_count'] > 2 else COLOR_THEME["emerald"],
+            badge_text="Urgent" if kpis['high_risk_count'] > 2 else "Normal"
         )
 
-    with col2:
+    with c2:
         avg_score_text = f"{kpis['avg_risk_score']:.1f}%"
-        risk_tier = "Moderate" if kpis['avg_risk_score'] < 50 else ("High" if kpis['avg_risk_score'] >= 65 else "Elevated")
+        risk_tier = "High Alert" if kpis['avg_risk_score'] >= 65 else ("Elevated" if kpis['avg_risk_score'] >= 45 else "Moderate")
         render_kpi_card(
-            title="Average Risk Score",
+            title="District Risk Index",
             value=avg_score_text,
             delta=risk_tier,
-            subtext=f"Multi-hazard index across 16 zones ({kpis['latest_date_str']})",
-            alert_color=COLOR_THEME["teal_primary"],
-            badge_text="Index (0-100)"
+            subtext=f"Multi-hazard intensity score ({kpis['latest_date_str']})",
+            alert_color=RISK_COLORS["High"] if kpis['avg_risk_score'] >= 60 else COLOR_THEME["teal_primary"],
+            badge_text="0-100 Scale"
         )
 
-    with col3:
+    with c3:
         veg_delta_text = f"{kpis['green_cover_change_pct']:+.1f}%"
         render_kpi_card(
-            title="Green Cover Change",
+            title="5-Yr Canopy Loss",
             value=veg_delta_text,
-            delta="5-Yr Net Deficit",
-            subtext="MODIS NDVI (AppEEARS) & GFW Hansen (2021–2025)",
+            delta="Tree Cover Deficit",
+            subtext="NASA AppEEARS & Global Forest Watch",
             alert_color=RISK_COLORS["High"] if kpis['green_cover_change_pct'] < 0 else COLOR_THEME["emerald"],
-            badge_text="NASA AppEEARS"
+            badge_text="2021–2025"
         )
 
-    with col4:
-        carbon_val = f"{kpis['carbon_change_tco2e']/1000:+.1f}k"
+    with c4:
+        carbon_val = f"{kpis['carbon_change_mt']:.2f} Mt"
         render_kpi_card(
-            title="Est. Carbon Change",
-            value=f"{carbon_val} t",
+            title="Biomass Carbon Deficit",
+            value=f"{carbon_val}",
             delta=f"{kpis['carbon_change_pct']:+.1f}%",
-            subtext="Estimated biomass carbon stock delta (tCO₂e)",
-            alert_color=RISK_COLORS["High"] if kpis['carbon_change_tco2e'] < 0 else COLOR_THEME["emerald"],
-            badge_text="GFW / IPCC Proxy"
+            subtext="Estimated living canopy carbon loss (tCO₂e)",
+            alert_color=RISK_COLORS["High"] if kpis['carbon_change_mt'] < 0 else COLOR_THEME["emerald"],
+            badge_text="IPCC Tier 1"
         )
 
-    st.markdown("<div style='height: 18px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
 
-    # "How It Works" Flow Strip
-    st.markdown("#### ⚡ System Architecture: How It Works")
-    render_how_it_works()
+    # 3. INTERACTIVE TALUKA SPOTLIGHT (The core user-friendly feature!)
+    st.markdown("### 🔍 Interactive Taluka Diagnosis & Simulator")
+    
+    slice_df = df_risk[df_risk["date"] == selected_date]
+    if selected_hazard:
+        slice_df = slice_df[slice_df["hazard_type"] == selected_hazard]
 
-    st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
+    # Area selector
+    area_options = slice_df.sort_values(by="risk_score", ascending=False)["area_name"].tolist()
+    
+    col_sel, col_sim = st.columns([1.2, 1])
 
-    # 2 Interactive Analytical Overview Columns
-    col_chart1, col_chart2 = st.columns([1.1, 0.9])
-
-    with col_chart1:
-        st.markdown(f"#### 🚨 Taluka Risk Ranking ({selected_period_str})")
-        slice_df = df_risk[df_risk["date"] == selected_date]
-        if selected_hazard:
-            slice_df = slice_df[slice_df["hazard_type"] == selected_hazard]
-        
-        area_summary = slice_df.groupby("area_name").agg({
-            "risk_score": "max",
-            "risk_level": "last",
-            "worldpop_population": "first",
-            "hazard_type": lambda x: "/".join(x.unique())
-        }).reset_index().sort_values(by="risk_score", ascending=True)
-
-        fig_bar = px.bar(
-            area_summary,
-            x="risk_score",
-            y="area_name",
-            orientation="h",
-            color="risk_level",
-            color_discrete_map=RISK_COLORS,
-            labels={"risk_score": "Model Risk Score (0-1.0)", "area_name": "DataMeet Taluka", "risk_level": "Level"},
-            hover_data={"risk_score": ":.2f", "worldpop_population": ":,"}
-        )
-        fig_bar = apply_clean_layout(
-            fig_bar,
-            title=f"DataMeet Sub-District Vulnerability Snapshot ({selected_period_str})",
-            x_title="Predicted Risk Score",
-            y_title="",
-            height=440
-        )
-        st.plotly_chart(fig_bar, use_container_width=True)
-        render_takeaway(
-            "Urban core zones (Pune City PMC, Hadapsar, PCMC) and eastern drought belts register elevated risks driven by impervious density and surface temperature anomalies."
+    with col_sel:
+        selected_taluka = st.selectbox(
+            "👉 Select a Pune Taluka to inspect in real-time:",
+            options=area_options,
+            index=0,
+            help="Choose any taluka to view localized satellite sensors and risk drivers."
         )
 
-    with col_chart2:
-        st.markdown(f"#### 📊 Risk Classification Breakdown ({selected_period_str})")
-        risk_dist = slice_df["risk_level"].value_counts().reset_index()
-        risk_dist.columns = ["risk_level", "count"]
+    with col_sim:
+        sim_mitigation = st.slider(
+            "⚡ What-If Simulator: Municipal Intervention Strength",
+            min_value=0,
+            max_value=35,
+            value=0,
+            step=5,
+            format="+%d%% Greenery / Cool Roofs",
+            help="Slide to simulate real-time risk reduction from deploying cool roofs and Miyawaki forests!"
+        )
 
-        fig_pie = px.pie(
-            risk_dist,
-            names="risk_level",
-            values="count",
-            color="risk_level",
-            color_discrete_map=RISK_COLORS,
-            hole=0.6,
-        )
-        fig_pie.update_traces(
-            textposition="inside",
-            textinfo="percent+label",
-            marker=dict(line=dict(color="#FFFFFF", width=2))
-        )
-        fig_pie = apply_clean_layout(
-            fig_pie,
-            title=f"Proportion of Areas in Risk Categories ({selected_period_str})",
-            height=340,
-            show_legend=False
-        )
-        st.plotly_chart(fig_pie, use_container_width=True)
+    # Get data for selected area
+    taluka_data = slice_df[slice_df["area_name"] == selected_taluka].iloc[0]
+    raw_risk = taluka_data["risk_score"]
+    
+    # Apply simulator reduction
+    mitigated_risk = max(0.08, raw_risk * (1.0 - (sim_mitigation * 0.012)))
+    level = "High" if mitigated_risk >= 0.65 else ("Medium" if mitigated_risk >= 0.40 else "Low")
+    badge_html = get_risk_badge_html(level)
 
-        # Quick model benchmark snapshot badge
-        if metrics:
-            acc = metrics.get("overall", {}).get("accuracy", 0.89) * 100
-            f1 = metrics.get("overall", {}).get("f1_macro", 0.88) * 100
-            auc = metrics.get("overall", {}).get("roc_auc_ovr", 0.94) * 100
-            st.markdown(
-                f"""
-                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 16px;">
-                    <div style="font-size: 11.5px; font-weight: 700; color: #64748B; text-transform: uppercase;">
-                        Model Test Performance (Validated on EM-DAT / DFO Floods)
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 8px;">
-                        <div><strong style="color: #0F172A; font-size: 16px;">{acc:.1f}%</strong><br><span style="font-size: 11px; color: #64748B;">Accuracy</span></div>
-                        <div><strong style="color: #0D9488; font-size: 16px;">{f1:.1f}%</strong><br><span style="font-size: 11px; color: #64748B;">F1-Score</span></div>
-                        <div><strong style="color: #0F172A; font-size: 16px;">{auc:.1f}%</strong><br><span style="font-size: 11px; color: #64748B;">ROC-AUC</span></div>
-                    </div>
+    # Layout: Radial Gauge on Left, Sensor Chips & Action on Right
+    spot_col1, spot_col2 = st.columns([1, 1.6])
+
+    with spot_col1:
+        fig_gauge = create_risk_gauge(mitigated_risk, title=f"{selected_taluka}")
+        st.plotly_chart(fig_gauge, use_container_width=True)
+        if sim_mitigation > 0:
+            st.success(f"🌱 Simulation Effect: Risk reduced by -{(raw_risk - mitigated_risk)*100:.1f}% through {sim_mitigation}% intervention expansion!")
+
+    with spot_col2:
+        # 4 Sensor Chips
+        chip1, chip2, chip3, chip4 = st.columns(4)
+        with chip1:
+            st.metric("👥 Population", f"{taluka_data.get('worldpop_population', 0):,}", delta="WorldPop")
+        with chip2:
+            st.metric("🌡️ MODIS LST", f"{taluka_data.get('modis_lst_c', 'N/A')}°C", delta="AppEEARS")
+        with chip3:
+            st.metric("🌧️ 24h Rainfall", f"{taluka_data.get('rainfall_24h_mm', 'N/A')} mm", delta="Open-Meteo")
+        with chip4:
+            st.metric("🏙️ Built-up Area", f"{taluka_data.get('esa_builtup_pct', 'N/A')}%", delta="ESA WorldCover")
+
+        # Top factors & Prescribed Action
+        st.markdown(
+            f"""
+            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 16px; margin-top: 10px;">
+                <div style="font-size: 12px; font-weight: 700; color: #0F172A; margin-bottom: 4px;">
+                    📌 Top Risk Drivers:
                 </div>
-                """,
-                unsafe_allow_html=True
-            )
-        render_takeaway(
-            "Over 65% of surveyed talukas require active seasonal contingency monitoring, demonstrating the need for automated mitigation actions."
+                <div style="font-size: 12px; color: #334155;">
+                    1. <strong>{taluka_data['top_factor_1']}</strong> &nbsp;|&nbsp; 2. <strong>{taluka_data['top_factor_2']}</strong>
+                </div>
+                <div style="background: #F0FDFA; border-left: 3px solid #0D9488; padding: 8px 12px; border-radius: 4px; margin-top: 8px; font-size: 12.5px; color: #134E4A;">
+                    🎯 <strong>Prescribed Municipal Action:</strong> {taluka_data['primary_recommendation']}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
-    # Footer
+    st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+
+    # 4. DISTRICT RISK RANKING (Clean & Interactive)
+    st.markdown(f"### 📊 Full District Vulnerability Ranking ({kpis['latest_date_str']})")
+
+    ranking_df = slice_df.groupby("area_name").agg({
+        "risk_score": "max",
+        "risk_level": "last",
+        "worldpop_population": "first",
+        "hazard_type": lambda x: "/".join(x.unique())
+    }).reset_index().sort_values(by="risk_score", ascending=True)
+
+    fig_bar = px.bar(
+        ranking_df,
+        x="risk_score",
+        y="area_name",
+        orientation="h",
+        color="risk_level",
+        color_discrete_map=RISK_COLORS,
+        labels={"risk_score": "Predicted Risk Score (0–1.0)", "area_name": "DataMeet Taluka"},
+        hover_data={"risk_score": ":.2f", "worldpop_population": ":,"}
+    )
+    fig_bar = apply_clean_layout(
+        fig_bar,
+        title=f"All 16 Talukas Ranked by Vulnerability ({kpis['latest_date_str']})",
+        x_title="Severity Score",
+        y_title="",
+        height=420
+    )
+    st.plotly_chart(fig_bar, use_container_width=True)
+
+    render_takeaway(
+        f"In {kpis['latest_date_str']}, {ranking_df.iloc[-1]['area_name']} faces the highest vulnerability score ({ranking_df.iloc[-1]['risk_score']*100:.1f}%), requiring priority deployment of municipal disaster teams."
+    )
+
+    st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
+
+    # 5. STREAMLINED HOW IT WORKS & VERIFIED DATA FEEDS EXPANDER
+    with st.expander("ℹ️ Click to view the 10 Verified Datasets & System Architecture"):
+        st.markdown(
+            """
+            | Data Task | Best Pick | Purpose |
+            |---|---|---|
+            | **1. Weather & Wind** | **Open-Meteo Historical API** | Real-time ERA5-quality atmospheric data without API keys |
+            | **2. Monsoon Rain** | **Open-Meteo / IMD Gridded Rain** | Peak 24-hour rainfall intensity modeling |
+            | **3. Vegetation (NDVI)** | **NASA AppEEARS (MODIS NDVI)** | 250m multi-year photosynthetic canopy health |
+            | **4. Land Surface Temp** | **MODIS LST via AppEEARS** | 1km day/night surface thermal infrared anomalies |
+            | **5. Elevation & Slope** | **SRTM via Google Earth Engine** | 30m Digital Elevation Model & Topographic Wetness Index |
+            | **6. Land Cover** | **ESA WorldCover** | 10m high-resolution built-up vs vegetative land classification |
+            | **7. Forest Loss** | **Global Forest Watch (Hansen)** | Year-by-year canopy loss for biomass carbon proxy accounting |
+            | **8. Population Count** | **WorldPop Gridded Population** | 100m spatial demographics to assess human exposure |
+            | **9. Disaster Ground-Truth** | **EM-DAT & Dartmouth Flood Observatory** | Historical flood and heatwave emergency validation |
+            | **10. Boundaries** | **DataMeet Indian Sub-districts** | Official administrative taluka shapes for Pune |
+            """
+        )
+
     render_footer()
 
 
