@@ -13,78 +13,168 @@ from src.utils import COLOR_THEME, RISK_COLORS, RISK_BG_COLORS, DESIGNATED_DATAS
 def render_header(title: str = "ClimateSense", subtitle: str = "AI-Driven Climate Risk & Carbon Monitoring | Pune District"):
     """
     Renders top header badge with Pune district tag, live status,
-    and seamlessly injects the Aceternity Aurora Background animation across the website.
+    and injects the Aceternity Aurora Background viewport with guaranteed visibility.
     """
     html = textwrap.dedent(f"""
     <style>
-        @keyframes aurora-flow {{
-            from {{
+        @keyframes aurora-flow-1 {{
+            0% {{
                 background-position: 50% 50%, 50% 50%;
             }}
-            to {{
-                background-position: 350% 50%, 350% 50%;
+            50% {{
+                background-position: 200% 60%, 150% 40%;
+            }}
+            100% {{
+                background-position: 350% 50%, 250% 50%;
             }}
         }}
 
-        [data-testid="stAppViewContainer"] {{
-            background-color: #FAFAFA !important;
-            position: relative !important;
-            overflow-x: hidden !important;
+        @keyframes aurora-drift-1 {{
+            0%, 100% {{
+                transform: translate(0px, 0px) scale(1);
+            }}
+            33% {{
+                transform: translate(70px, -50px) scale(1.15);
+            }}
+            66% {{
+                transform: translate(-50px, 60px) scale(0.95);
+            }}
         }}
 
-        /* Aceternity Aurora Background Layer 1: Ethereal Aurora Wave */
-        [data-testid="stAppViewContainer"]::before {{
-            content: "" !important;
+        @keyframes aurora-drift-2 {{
+            0%, 100% {{
+                transform: translate(0px, 0px) scale(1.1);
+            }}
+            33% {{
+                transform: translate(-80px, 60px) scale(0.9);
+            }}
+            66% {{
+                transform: translate(60px, -70px) scale(1.2);
+            }}
+        }}
+
+        @keyframes aurora-drift-3 {{
+            0%, 100% {{
+                transform: translate(0px, 0px) scale(1);
+            }}
+            50% {{
+                transform: translate(80px, 40px) scale(1.2);
+            }}
+        }}
+
+        /* 1. RESET ALL STREAMLIT CONTAINERS TO TRANSPARENT SO AURORA IS VISIBLE */
+        html, body {{
+            margin: 0 !important;
+            padding: 0 !important;
+            background-color: #F8FAFC !important;
+        }}
+
+        .stApp,
+        [data-testid="stAppViewContainer"],
+        [data-testid="stMain"],
+        [data-testid="stMainBlockContainer"],
+        section.main,
+        .main,
+        header[data-testid="stHeader"] {{
+            background: transparent !important;
+            background-color: transparent !important;
+        }}
+
+        /* 2. FIXED AURORA BACKGROUND VIEWPORT (Always active behind content) */
+        .aurora-viewport-bg {{
             position: fixed !important;
-            top: -10px !important;
-            left: -10px !important;
-            right: -10px !important;
-            bottom: -10px !important;
-            opacity: 0.42 !important;
-            filter: blur(14px) invert(1) !important;
-            will-change: transform, background-position !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            overflow: hidden !important;
             pointer-events: none !important;
             z-index: 0 !important;
+            background-color: #F8FAFC !important;
+        }}
+
+        /* Glowing Aurora Orbs */
+        .aurora-glow-orb-1 {{
+            position: absolute !important;
+            top: -15% !important;
+            left: -10% !important;
+            width: 65vw !important;
+            height: 65vh !important;
+            border-radius: 50% !important;
+            background: radial-gradient(circle, rgba(14, 165, 233, 0.45) 0%, rgba(99, 102, 241, 0.3) 45%, transparent 70%) !important;
+            filter: blur(55px) !important;
+            animation: aurora-drift-1 22s ease-in-out infinite !important;
+            will-change: transform !important;
+        }}
+
+        .aurora-glow-orb-2 {{
+            position: absolute !important;
+            bottom: -15% !important;
+            right: -10% !important;
+            width: 70vw !important;
+            height: 70vh !important;
+            border-radius: 50% !important;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.45) 0%, rgba(13, 148, 136, 0.35) 45%, transparent 70%) !important;
+            filter: blur(60px) !important;
+            animation: aurora-drift-2 26s ease-in-out infinite !important;
+            will-change: transform !important;
+        }}
+
+        .aurora-glow-orb-3 {{
+            position: absolute !important;
+            top: 25% !important;
+            right: 15% !important;
+            width: 50vw !important;
+            height: 50vh !important;
+            border-radius: 50% !important;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.38) 0%, rgba(59, 130, 246, 0.25) 50%, transparent 70%) !important;
+            filter: blur(50px) !important;
+            animation: aurora-drift-3 18s ease-in-out infinite !important;
+            will-change: transform !important;
+        }}
+
+        /* Aceternity 100-degree Repeating Linear Gradient Curtains */
+        .aurora-flow-curtain {{
+            position: absolute !important;
+            inset: -30px !important;
+            opacity: 0.70 !important;
+            filter: blur(20px) !important;
+            will-change: background-position !important;
             background-image: 
-                repeating-linear-gradient(100deg, #ffffff 0%, #ffffff 7%, transparent 10%, transparent 12%, #ffffff 16%),
-                repeating-linear-gradient(100deg, #3b82f6 10%, #a5b4fc 15%, #0ea5e9 20%, #ddd6fe 25%, #60a5fa 30%) !important;
-            background-size: 300% 200% !important;
+                repeating-linear-gradient(100deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.55) 7%, transparent 10%, transparent 12%, rgba(255, 255, 255, 0.55) 16%),
+                repeating-linear-gradient(100deg, #3b82f6 10%, #a5b4fc 15%, #0ea5e9 20%, #a855f7 25%, #10b981 30%, #60a5fa 35%) !important;
+            background-size: 250% 150%, 250% 150% !important;
             background-position: 50% 50%, 50% 50% !important;
-            -webkit-mask-image: radial-gradient(ellipse at 100% 0%, black 10%, transparent 70%) !important;
-            mask-image: radial-gradient(ellipse at 100% 0%, black 10%, transparent 70%) !important;
-            animation: aurora-flow 60s linear infinite !important;
+            mask-image: radial-gradient(ellipse at 80% 15%, black 20%, transparent 80%) !important;
+            -webkit-mask-image: radial-gradient(ellipse at 80% 15%, black 20%, transparent 80%) !important;
+            animation: aurora-flow-1 40s linear infinite !important;
         }}
 
-        /* Aceternity Aurora Background Layer 2: Counter-flow Ambient Lights */
-        [data-testid="stAppViewContainer"]::after {{
-            content: "" !important;
-            position: fixed !important;
-            top: -10px !important;
-            left: -10px !important;
-            right: -10px !important;
-            bottom: -10px !important;
-            opacity: 0.32 !important;
-            filter: blur(16px) invert(1) !important;
-            will-change: transform, background-position !important;
-            pointer-events: none !important;
-            z-index: 0 !important;
+        .aurora-flow-curtain-2 {{
+            position: absolute !important;
+            inset: -30px !important;
+            opacity: 0.55 !important;
+            filter: blur(24px) !important;
+            will-change: background-position !important;
             background-image: 
-                repeating-linear-gradient(100deg, #ffffff 0%, #ffffff 7%, transparent 10%, transparent 12%, #ffffff 16%),
-                repeating-linear-gradient(100deg, #0d9488 10%, #38bdf8 15%, #818cf8 20%, #c084fc 25%, #2dd4bf 30%) !important;
-            background-size: 200% 100% !important;
-            background-attachment: fixed !important;
-            mix-blend-mode: difference !important;
-            animation: aurora-flow 45s linear infinite reverse !important;
+                repeating-linear-gradient(100deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.5) 7%, transparent 10%, transparent 12%, rgba(255, 255, 255, 0.5) 16%),
+                repeating-linear-gradient(115deg, #0d9488 10%, #38bdf8 16%, #818cf8 22%, #c084fc 28%, #34d399 34%) !important;
+            background-size: 200% 120%, 200% 120% !important;
+            background-position: 50% 50%, 50% 50% !important;
+            mix-blend-mode: overlay !important;
+            animation: aurora-flow-1 55s linear infinite reverse !important;
         }}
 
+        /* 3. ELEVATED CONTENT LAYER */
         .block-container {{
             position: relative !important;
             z-index: 1 !important;
             padding-top: 1.4rem !important;
             padding-bottom: 3rem !important;
+            max-width: 1400px !important;
         }}
 
-        /* Frosted Glass Container Cards for Pristine Readability */
+        /* 4. FROSTED GLASS CARDS */
         div[data-testid="stMetric"],
         div[data-testid="stVerticalBlockBorderWrapper"] > div {{
             background: rgba(255, 255, 255, 0.88) !important;
@@ -102,7 +192,17 @@ def render_header(title: str = "ClimateSense", subtitle: str = "AI-Driven Climat
         }}
     </style>
 
-    <div style="background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(226, 232, 240, 0.9); border-radius: 14px; padding: 14px 20px; margin-bottom: 18px; box-shadow: 0 4px 20px -2px rgba(15, 118, 110, 0.06); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+    <!-- FIXED AURORA BACKGROUND VIEWPORT -->
+    <div class="aurora-viewport-bg">
+        <div class="aurora-glow-orb-1"></div>
+        <div class="aurora-glow-orb-2"></div>
+        <div class="aurora-glow-orb-3"></div>
+        <div class="aurora-flow-curtain"></div>
+        <div class="aurora-flow-curtain-2"></div>
+    </div>
+
+    <!-- MAIN HEADER BANNER -->
+    <div style="background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(226, 232, 240, 0.9); border-radius: 14px; padding: 14px 20px; margin-bottom: 18px; box-shadow: 0 4px 20px -2px rgba(15, 118, 110, 0.06); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; position: relative; z-index: 1;">
         <div>
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                 <span style="font-size: 26px;">🌍</span>
