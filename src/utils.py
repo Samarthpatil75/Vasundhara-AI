@@ -425,3 +425,23 @@ def apply_clean_layout(
         }
     )
     return fig
+
+
+def apply_map_layout(fig: go.Figure, height: int = 480) -> go.Figure:
+    """Applies clean layout specifically to map figures (without cartesian axes)."""
+    fig.update_layout(
+        height=height,
+        margin={"l": 0, "r": 0, "t": 30, "b": 0},
+        paper_bgcolor="rgba(0,0,0,0)",
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5,
+            bgcolor="rgba(255,255,255,0.85)",
+            font={"size": 11, "color": COLOR_THEME["slate_text"]}
+        )
+    )
+    return fig
+

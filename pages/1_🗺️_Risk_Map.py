@@ -16,7 +16,8 @@ from src.utils import (
     COLOR_THEME,
     RISK_COLORS,
     RISK_BG_COLORS,
-    apply_clean_layout
+    apply_clean_layout,
+    apply_map_layout
 )
 from src.components import (
     render_header,
@@ -120,34 +121,56 @@ def main():
         st.markdown(f"#### 📍 Spatial Severity Map ({selected_hazard} • {selected_date_str})")
 
         if "Plotly" in map_mode:
-            # High-speed WebGL scatter mapbox with rich hover
-            fig_map = px.scatter_mapbox(
-                filtered_df,
-                lat="latitude",
-                lon="longitude",
-                size="risk_score",
-                color="risk_level",
-                color_discrete_map=RISK_COLORS,
-                hover_name="area_name",
-                hover_data={
-                    "risk_score": ":.2f",
-                    "worldpop_population": ":,",
-                    "modis_lst_c": ":.1f",
-                    "rainfall_24h_mm": ":.1f",
-                    "top_factor_1": True,
-                    "latitude": False,
-                    "longitude": False
-                },
-                size_max=28,
-                zoom=8.5,
-                center=dict(lat=18.5204, lon=73.8567),
-                mapbox_style="carto-positron"
-            )
-            fig_map = apply_clean_layout(fig_map, height=480, show_legend=True)
+            try:
+                # Modern Plotly 5.24+ / 6.0+ MapLibre open-source (no token required!)
+                fig_map = px.scatter_map(
+                    filtered_df,
+                    lat="latitude",
+                    lon="longitude",
+                    size="risk_score",
+                    color="risk_level",
+                    color_discrete_map=RISK_COLORS,
+                    hover_name="area_name",
+                    hover_data={
+                        "risk_score": ":.2f",
+                        "worldpop_population": ":,",
+                        "modis_lst_c": ":.1f",
+                        "rainfall_24h_mm": ":.1f",
+                        "top_factor_1": True,
+                        "latitude": False,
+                        "longitude": False
+                    },
+                    size_max=28,
+                    zoom=8.5,
+                    center=dict(lat=18.5204, lon=73.8567),
+                    map_style="open-street-map"
+                )
+            except Exception:
+                # Fallback to scatter_mapbox with open-street-map
+                fig_map = px.scatter_mapbox(
+                    filtered_df,
+                    lat="latitude",
+                    lon="longitude",
+                    size="risk_score",
+                    color="risk_level",
+                    color_discrete_map=RISK_COLORS,
+                    hover_name="area_name",
+                    hover_data={
+                        "risk_score": True,
+                        "top_factor_1": True,
+                        "latitude": False,
+                        "longitude": False
+                    },
+                    size_max=28,
+                    zoom=8.5,
+                    center=dict(lat=18.5204, lon=73.8567),
+                    mapbox_style="open-street-map"
+                )
+            fig_map = apply_map_layout(fig_map, height=480)
             st.plotly_chart(fig_map, use_container_width=True)
         else:
             pune_center = [18.5204, 73.8567]
-            fmap = folium.Map(location=pune_center, zoom_start=9, tiles="CartoDB positron", control_scale=True)
+            fmap = folium.Map(location=pune_center, zoom_start=9, tiles="OpenStreetMap", control_scale=True)
             for _, row in filtered_df.iterrows():
                 level = row["risk_level"]
                 color = RISK_COLORS.get(level, "#64748B")
