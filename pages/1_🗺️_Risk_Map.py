@@ -200,7 +200,7 @@ def main():
                     popup=folium.Popup(popup_html, max_width=300),
                     tooltip=f"{row['area_name']}: {score_pct:.1f}% ({level})"
                 ).add_to(fmap)
-            st_folium(fmap, width="100%", height=480, returned_objects=[])
+            st_folium(fmap, use_container_width=True, height=480, returned_objects=[])
 
         render_takeaway(
             f"{selected_hazard} severity clusters heavily in specific micro-corridors. Toggle areas on the right to see immediate policy actions."
