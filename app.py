@@ -32,6 +32,7 @@ from src.utils import (
 from src.components import (
     render_header,
     render_kpi_card,
+    render_interactive_taluka_indicators,
     render_takeaway,
     render_footer,
     get_risk_badge_html,
@@ -226,33 +227,11 @@ def main():
             st.success(f"🌱 Simulation Effect: Risk reduced by -{(raw_risk - mitigated_risk)*100:.1f}% through {sim_mitigation}% intervention expansion!")
 
     with spot_col2:
-        # 4 Sensor Chips
-        chip1, chip2, chip3, chip4 = st.columns(4)
-        with chip1:
-            st.metric("👥 Population", f"{taluka_data.get('worldpop_population', 0):,}", delta="WorldPop")
-        with chip2:
-            st.metric("🌡️ MODIS LST", f"{taluka_data.get('modis_lst_c', 'N/A')}°C", delta="AppEEARS")
-        with chip3:
-            st.metric("🌧️ 24h Rainfall", f"{taluka_data.get('rainfall_24h_mm', 'N/A')} mm", delta="Open-Meteo")
-        with chip4:
-            st.metric("🏙️ Built-up Area", f"{taluka_data.get('esa_builtup_pct', 'N/A')}%", delta="ESA WorldCover")
-
-        # Top factors & Prescribed Action
-        st.markdown(
-            f"""
-            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 16px; margin-top: 10px;">
-                <div style="font-size: 12px; font-weight: 700; color: #0F172A; margin-bottom: 4px;">
-                    📌 Top Risk Drivers:
-                </div>
-                <div style="font-size: 12px; color: #334155;">
-                    1. <strong>{taluka_data['top_factor_1']}</strong> &nbsp;|&nbsp; 2. <strong>{taluka_data['top_factor_2']}</strong>
-                </div>
-                <div style="background: #F0FDFA; border-left: 3px solid #0D9488; padding: 8px 12px; border-radius: 4px; margin-top: 8px; font-size: 12.5px; color: #134E4A;">
-                    🎯 <strong>Prescribed Municipal Action:</strong> {taluka_data['primary_recommendation']}
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        render_interactive_taluka_indicators(
+            taluka_data=taluka_data,
+            selected_taluka=selected_taluka,
+            sim_mitigation=sim_mitigation,
+            is_compact=False
         )
 
     st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)

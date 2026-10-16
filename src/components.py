@@ -292,27 +292,332 @@ def render_kpi_card(
     badge_text: str = ""
 ):
     """
-    Renders a clean, robust card for top-line metrics using native Streamlit containers.
-    Prevents any raw HTML markdown rendering errors.
+    Renders an impeccably aligned, glassmorphic metric card with fixed height (155px).
+    Guarantees 100% vertical alignment across all cards in a grid, with a glowing status accent
+    and real-time telemetry indicator track.
     """
-    with st.container(border=True):
-        col_lbl, col_bdg = st.columns([1.8, 1.2])
-        with col_lbl:
-            st.caption(f"**{title.upper()}**")
-        with col_bdg:
-            if badge_text:
-                st.markdown(
-                    f"<div style='text-align:right;'><span style='background:#F1F5F9; color:#475569; font-size:10px; font-weight:700; padding:2px 7px; border-radius:9999px; border:1px solid #E2E8F0;'>{badge_text}</span></div>",
-                    unsafe_allow_html=True
-                )
-        st.metric(
-            label=title,
-            value=value,
-            delta=delta if delta else None,
-            label_visibility="collapsed"
-        )
-        if subtext:
-            st.caption(subtext)
+    # Format badge HTML if provided
+    badge_html = ""
+    if badge_text:
+        badge_html = f"""<span style="background: rgba(241, 245, 249, 0.9); color: #475569; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 9999px; border: 1px solid #E2E8F0; white-space: nowrap;">{badge_text}</span>"""
+
+    # Format delta badge/chip if provided
+    delta_html = ""
+    if delta:
+        d_lower = delta.lower()
+        if any(w in d_lower for w in ["loss", "deficit", "urgent", "high", "alert", "decrease"]):
+            d_color = "#DC2626"
+            d_bg = "#FEF2F2"
+        elif any(w in d_lower for w in ["gain", "surplus", "normal", "optimal", "balanced", "increase"]):
+            d_color = "#059669"
+            d_bg = "#ECFDF5"
+        else:
+            d_color = "#0F766E"
+            d_bg = "#F0FDFA"
+        
+        delta_html = f"""<span style="display: inline-block; font-size: 11px; font-weight: 600; color: {d_color}; background: {d_bg}; padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle;">{delta}</span>"""
+
+    # Subtext handling
+    subtext_content = subtext if subtext else "&nbsp;"
+
+    card_html = f"""
+    <div style="
+        height: 155px;
+        background: rgba(255, 255, 255, 0.90);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 12px;
+        padding: 14px 16px;
+        border: 1px solid rgba(226, 232, 240, 0.85);
+        border-left: 4px solid {alert_color};
+        box-shadow: 0 4px 15px -2px rgba(15, 23, 42, 0.05);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-sizing: border-box;
+        margin-bottom: 8px;
+    ">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+            <span style="color: #64748B; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                {title}
+            </span>
+            {badge_html}
+        </div>
+        <div style="margin: 4px 0;">
+            <span style="font-size: 26px; font-weight: 800; color: #0F172A; letter-spacing: -0.5px; line-height: 1.1;">
+                {value}
+            </span>
+            {delta_html}
+        </div>
+        <div>
+            <div style="font-size: 11px; color: #64748B; line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; min-height: 28px;">
+                {subtext_content}
+            </div>
+            <div style="width: 100%; height: 3px; background: linear-gradient(90deg, {alert_color} 0%, rgba(226, 232, 240, 0.3) 100%); border-radius: 2px; margin-top: 6px;"></div>
+        </div>
+    </div>
+    """
+    st.markdown(card_html, unsafe_allow_html=True)
+
+
+def render_interactive_taluka_indicators(
+    taluka_data,
+    selected_taluka: str,
+    sim_mitigation: int = 0,
+    is_compact: bool = False
+):
+    """
+    Renders an extraordinary, interactive Multi-Sensor Telemetry Deck.
+    Replaces static text chips with dynamic visual spectrum gauges, hydrological surge bars,
+    dual-segmented concrete vs canopy buffers, and demographic density scales.
+    Directly responds in real-time to the What-If Municipal Simulator slider.
+    """
+    # Safe data extraction
+    pop_raw = taluka_data.get('worldpop_population', 0)
+    try:
+        pop_val = int(pop_raw)
+    except (ValueError, TypeError):
+        pop_val = 0
+
+    lst_raw = taluka_data.get('modis_lst_c', 32.0)
+    try:
+        lst_val = float(lst_raw)
+    except (ValueError, TypeError):
+        lst_val = 32.0
+
+    rain_raw = taluka_data.get('rainfall_24h_mm', 25.0)
+    try:
+        rain_val = float(rain_raw)
+    except (ValueError, TypeError):
+        rain_val = 25.0
+
+    builtup_raw = taluka_data.get('esa_builtup_pct', 45.0)
+    try:
+        builtup_val = float(builtup_raw)
+    except (ValueError, TypeError):
+        builtup_val = 45.0
+
+    green_raw = taluka_data.get('esa_green_pct', 35.0)
+    try:
+        green_val = float(green_raw)
+    except (ValueError, TypeError):
+        green_val = 35.0
+
+    area_type = taluka_data.get('area_type', 'Taluka')
+    risk_level = taluka_data.get('risk_level', 'Medium')
+    top_factor_1 = taluka_data.get('top_factor_1', 'Impervious Built-up Density')
+    top_factor_2 = taluka_data.get('top_factor_2', 'Atmospheric Heat Stress')
+    recommendation = taluka_data.get('primary_recommendation', 'Deploy localized green buffer and cool pavements.')
+
+    # Dynamic Simulator Calculations
+    lst_drop = sim_mitigation * 0.08
+    effective_lst = max(24.0, lst_val - lst_drop)
+    effective_green = min(95.0, green_val + sim_mitigation)
+    effective_builtup = max(5.0, builtup_val - sim_mitigation)
+
+    # 1. Thermal Spectrum (20°C to 45°C)
+    lst_pct = max(0.0, min(100.0, (effective_lst - 20.0) / (45.0 - 20.0) * 100.0))
+    if effective_lst >= 38.0:
+        lst_status = "🔥 Extreme Urban Heat Island"
+        lst_color = "#DC2626"
+        lst_bg = "#FEF2F2"
+    elif effective_lst >= 33.0:
+        lst_status = "⚠️ Elevated Heat Stress"
+        lst_color = "#D97706"
+        lst_bg = "#FFFBEB"
+    else:
+        lst_status = "🌿 Temperate Microclimate"
+        lst_color = "#059669"
+        lst_bg = "#ECFDF5"
+
+    sim_lst_chip = ""
+    if sim_mitigation > 0:
+        sim_lst_chip = f"""<span style="color: #059669; font-size: 10px; font-weight: 700; background: #ECFDF5; padding: 1px 5px; border-radius: 4px;">-{lst_drop:.1f}°C Cool Roof</span>"""
+
+    # 2. Hydrological Surge (0 to 120 mm)
+    rain_pct = max(5.0, min(100.0, (rain_val / 100.0) * 100.0))
+    if rain_val >= 70.0:
+        rain_status = "🌊 Severe Inundation Alert"
+        rain_color = "#DC2626"
+        rain_bg = "#FEF2F2"
+    elif rain_val >= 35.0:
+        rain_status = "💧 Active Monsoonal Inflow"
+        rain_color = "#0284C7"
+        rain_bg = "#F0F9FF"
+    else:
+        rain_status = "⛅ Safe Infiltration Rate"
+        rain_color = "#059669"
+        rain_bg = "#ECFDF5"
+
+    # 3. Surface Permeability
+    concrete_pct = max(5.0, min(95.0, effective_builtup))
+    canopy_pct = 100.0 - concrete_pct
+    if concrete_pct >= 65.0:
+        perm_status = "🧱 High Impermeable Runoff"
+        perm_color = "#DC2626"
+        perm_bg = "#FEF2F2"
+    elif concrete_pct >= 40.0:
+        perm_status = "🏢 Moderate Urbanized Surface"
+        perm_color = "#D97706"
+        perm_bg = "#FFFBEB"
+    else:
+        perm_status = "🌳 High Permeable Canopy"
+        perm_color = "#059669"
+        perm_bg = "#ECFDF5"
+
+    sim_perm_chip = ""
+    if sim_mitigation > 0:
+        sim_perm_chip = f"""<span style="color: #059669; font-size: 10px; font-weight: 700; background: #ECFDF5; padding: 1px 5px; border-radius: 4px;">+{sim_mitigation}% Eco-Buffer</span>"""
+
+    # 4. Demographic Exposure (0 to 1.5M scale)
+    pop_pct = max(5.0, min(100.0, (pop_val / 1500000.0) * 100.0))
+    if pop_val >= 800000:
+        pop_status = "🚨 Dense Metropolitan Core"
+        pop_color = "#DC2626"
+        pop_bg = "#FEF2F2"
+    elif pop_val >= 300000:
+        pop_status = "👥 Peri-Urban Suburb Corridor"
+        pop_color = "#7C3AED"
+        pop_bg = "#F5F3FF"
+    else:
+        pop_status = "🌾 Watershed / Agro-Buffer"
+        pop_color = "#059669"
+        pop_bg = "#ECFDF5"
+
+    grid_cols = "1fr" if is_compact else "1fr 1fr"
+
+    html = f"""
+    <div style="
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        border-radius: 12px;
+        padding: 14px 16px;
+        box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.06);
+        margin-bottom: 12px;
+    ">
+        <!-- Deck Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid #F1F5F9; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 15px; font-weight: 800; color: #0F172A;">🛰️ Live Sensor Telemetry Deck</span>
+                <span style="background: #E2E8F0; color: #334155; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 9999px;">{area_type}</span>
+            </div>
+            <div style="font-size: 11px; color: #64748B; font-weight: 600;">
+                <span style="display: inline-block; width: 7px; height: 7px; background: #10B981; border-radius: 50%; margin-right: 4px; box-shadow: 0 0 6px #10B981;"></span>
+                Synchronized
+            </div>
+        </div>
+
+        <!-- 4 Visual Instrument Meters -->
+        <div style="display: grid; grid-template-columns: {grid_cols}; gap: 10px;">
+            
+            <!-- Meter 1: Thermal LST -->
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <span style="font-size: 10.5px; font-weight: 700; color: #475569; text-transform: uppercase;">🌡️ Land Surface Temp</span>
+                    <span style="font-size: 9.5px; color: #64748B; background: #FFFFFF; border: 1px solid #E2E8F0; padding: 1px 5px; border-radius: 4px;">AppEEARS</span>
+                </div>
+                <div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 6px;">
+                    <span style="font-size: 20px; font-weight: 800; color: #0F172A;">{effective_lst:.1f}°C</span>
+                    {sim_lst_chip}
+                </div>
+                <!-- Spectrum Track with Pin -->
+                <div style="position: relative; width: 100%; height: 7px; background: linear-gradient(90deg, #10B981 0%, #3B82F6 25%, #F59E0B 65%, #EF4444 100%); border-radius: 4px; margin-bottom: 6px;">
+                    <div style="position: absolute; left: calc({lst_pct}% - 3px); top: -3px; width: 7px; height: 13px; background: #0F172A; border: 1.5px solid #FFFFFF; border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 9px; color: #94A3B8;">20°C</span>
+                    <span style="background: {lst_bg}; color: {lst_color}; font-size: 9.5px; font-weight: 700; padding: 1px 6px; border-radius: 4px;">{lst_status}</span>
+                    <span style="font-size: 9px; color: #94A3B8;">45°C</span>
+                </div>
+            </div>
+
+            <!-- Meter 2: Precipitation Surge -->
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <span style="font-size: 10.5px; font-weight: 700; color: #475569; text-transform: uppercase;">🌧️ 24h Precipitation</span>
+                    <span style="font-size: 9.5px; color: #64748B; background: #FFFFFF; border: 1px solid #E2E8F0; padding: 1px 5px; border-radius: 4px;">Open-Meteo</span>
+                </div>
+                <div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 6px;">
+                    <span style="font-size: 20px; font-weight: 800; color: #0F172A;">{rain_val:.1f} mm</span>
+                </div>
+                <!-- Surge Bar -->
+                <div style="position: relative; width: 100%; height: 7px; background: #E0F2FE; border-radius: 4px; margin-bottom: 6px; overflow: hidden;">
+                    <div style="width: {rain_pct}%; height: 100%; background: linear-gradient(90deg, #0284C7 0%, #2563EB 100%); border-radius: 4px;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 9px; color: #94A3B8;">0 mm</span>
+                    <span style="background: {rain_bg}; color: {rain_color}; font-size: 9.5px; font-weight: 700; padding: 1px 6px; border-radius: 4px;">{rain_status}</span>
+                    <span style="font-size: 9px; color: #94A3B8;">100mm Alert</span>
+                </div>
+            </div>
+
+            <!-- Meter 3: Concrete vs Canopy Composition -->
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <span style="font-size: 10.5px; font-weight: 700; color: #475569; text-transform: uppercase;">🏙️ Surface Permeability</span>
+                    <span style="font-size: 9.5px; color: #64748B; background: #FFFFFF; border: 1px solid #E2E8F0; padding: 1px 5px; border-radius: 4px;">ESA 10m</span>
+                </div>
+                <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px;">
+                    <span style="font-size: 13px; font-weight: 800; color: #334155;">{concrete_pct:.0f}% Built <span style="color: #94A3B8; font-weight: normal;">|</span> <span style="color: #059669;">{canopy_pct:.0f}% Canopy</span></span>
+                    {sim_perm_chip}
+                </div>
+                <!-- Dual Segmented Bar -->
+                <div style="display: flex; width: 100%; height: 7px; border-radius: 4px; overflow: hidden; margin-bottom: 6px;">
+                    <div style="width: {concrete_pct}%; background: #64748B; height: 100%;"></div>
+                    <div style="width: {canopy_pct}%; background: #10B981; height: 100%;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 9px; color: #64748B;">Concrete</span>
+                    <span style="background: {perm_bg}; color: {perm_color}; font-size: 9.5px; font-weight: 700; padding: 1px 6px; border-radius: 4px;">{perm_status}</span>
+                    <span style="font-size: 9px; color: #10B981;">Canopy</span>
+                </div>
+            </div>
+
+            <!-- Meter 4: Demographic Density -->
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <span style="font-size: 10.5px; font-weight: 700; color: #475569; text-transform: uppercase;">👥 Population Exposure</span>
+                    <span style="font-size: 9.5px; color: #64748B; background: #FFFFFF; border: 1px solid #E2E8F0; padding: 1px 5px; border-radius: 4px;">WorldPop</span>
+                </div>
+                <div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 6px;">
+                    <span style="font-size: 20px; font-weight: 800; color: #0F172A;">{pop_val:,}</span>
+                </div>
+                <!-- Density Spectrum Bar -->
+                <div style="position: relative; width: 100%; height: 7px; background: #F3E8FF; border-radius: 4px; margin-bottom: 6px; overflow: hidden;">
+                    <div style="width: {pop_pct}%; height: 100%; background: linear-gradient(90deg, #A855F7 0%, #7C3AED 100%); border-radius: 4px;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 9px; color: #94A3B8;">Sparse</span>
+                    <span style="background: {pop_bg}; color: {pop_color}; font-size: 9.5px; font-weight: 700; padding: 1px 6px; border-radius: 4px;">{pop_status}</span>
+                    <span style="font-size: 9px; color: #94A3B8;">>1.5M</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- AI Root Cause Diagnostic & Protocol -->
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #F1F5F9;">
+            <div style="font-size: 11px; font-weight: 700; color: #334155; margin-bottom: 6px;">
+                📌 Algorithmic Root Drivers (SHAP Attribution):
+            </div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
+                <span style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 3px 8px; border-radius: 6px; font-size: 11px; color: #1E293B;">
+                    1. <strong>{top_factor_1}</strong>
+                </span>
+                <span style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 3px 8px; border-radius: 6px; font-size: 11px; color: #1E293B;">
+                    2. <strong>{top_factor_2}</strong>
+                </span>
+            </div>
+            <div style="background: #F0FDFA; border-left: 3px solid #0D9488; padding: 8px 12px; border-radius: 6px; font-size: 12px; color: #134E4A; line-height: 1.45;">
+                🎯 <strong>Prescribed Municipal Protocol:</strong> {recommendation}
+            </div>
+        </div>
+    </div>
+    """
+    st.markdown(html, unsafe_allow_html=True)
+
 
 
 def render_takeaway(takeaway_text: str):

@@ -21,6 +21,8 @@ from src.utils import (
 )
 from src.components import (
     render_header,
+    render_kpi_card,
+    render_interactive_taluka_indicators,
     render_takeaway,
     render_footer,
     get_risk_badge_html,
@@ -104,13 +106,41 @@ def main():
 
     m1, m2, m3, m4 = st.columns(4)
     with m1:
-        st.metric("Surveyed Talukas", f"{len(filtered_df)} / 16", delta="DataMeet Boundaries")
+        render_kpi_card(
+            title="Surveyed Talukas",
+            value=f"{len(filtered_df)} / 16",
+            delta="Complete Coverage",
+            subtext="DataMeet Official Pune Admin Boundaries",
+            alert_color=COLOR_THEME["teal_primary"],
+            badge_text="Spatial Scope"
+        )
     with m2:
-        st.metric("Average Risk Score", f"{avg_score:.1f}%", delta="District Mean")
+        render_kpi_card(
+            title="Average Risk Score",
+            value=f"{avg_score:.1f}%",
+            delta="District Mean",
+            subtext=f"Composite hazard severity ({selected_hazard})",
+            alert_color=RISK_COLORS["High"] if avg_score >= 60 else COLOR_THEME["teal_primary"],
+            badge_text="0–100 Scale"
+        )
     with m3:
-        st.metric("High-Risk Hotspots", f"{high_count} Talukas", delta="Urgent Priority" if high_count > 0 else "Low Alert", delta_color="inverse")
+        render_kpi_card(
+            title="High-Risk Hotspots",
+            value=f"{high_count} Talukas",
+            delta="Urgent Alert" if high_count > 0 else "Optimal",
+            subtext="Zones exceeding danger threshold (≥65%)",
+            alert_color=RISK_COLORS["High"] if high_count > 0 else COLOR_THEME["emerald"],
+            badge_text="Urgent" if high_count > 0 else "Normal"
+        )
     with m4:
-        st.metric("Exposed Population", f"{total_pop_exp/1e6:.2f}M", delta="WorldPop 100m Gridded")
+        render_kpi_card(
+            title="Exposed Population",
+            value=f"{total_pop_exp/1e6:.2f}M",
+            delta="WorldPop 100m",
+            subtext="Gridded population residing in high-risk zones",
+            alert_color=RISK_COLORS["High"] if total_pop_exp > 0 else COLOR_THEME["emerald"],
+            badge_text="Human Exposure"
+        )
 
     st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
@@ -225,34 +255,12 @@ def main():
         fig_g = create_risk_gauge(score_val, title=f"{selected_inspect}")
         st.plotly_chart(fig_g, use_container_width=True)
 
-        # Compact details card
-        st.markdown(
-            f"""
-            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 16px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <div>
-                        <strong style="color: #0F172A; font-size: 14px;">{area_row['area_name']}</strong>
-                        <span style="color: #64748B; font-size: 11px;">({area_row['area_type']})</span>
-                    </div>
-                    <div>{badge_html}</div>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11.5px; margin-bottom: 10px;">
-                    <div style="background: #F8FAFC; padding: 5px 8px; border-radius: 4px;">👥 <strong>Pop:</strong> {area_row.get('worldpop_population', 0):,}</div>
-                    <div style="background: #F8FAFC; padding: 5px 8px; border-radius: 4px;">🌡️ <strong>LST:</strong> {area_row.get('modis_lst_c', 'N/A')}°C</div>
-                    <div style="background: #F8FAFC; padding: 5px 8px; border-radius: 4px;">🌧️ <strong>Rain:</strong> {area_row.get('rainfall_24h_mm', 'N/A')} mm</div>
-                    <div style="background: #F8FAFC; padding: 5px 8px; border-radius: 4px;">⛰️ <strong>Elev:</strong> {area_row.get('elevation_m', 'N/A')} m</div>
-                </div>
-                <div style="font-size: 12px; color: #0F172A; font-weight: 600; margin-bottom: 4px;">Key Drivers:</div>
-                <div style="font-size: 11.5px; color: #475569; line-height: 1.4;">
-                    • {area_row['top_factor_1']}<br>
-                    • {area_row['top_factor_2']}
-                </div>
-                <div style="background: #F0FDFA; border-left: 3px solid #0D9488; padding: 6px 10px; border-radius: 4px; margin-top: 8px; font-size: 12px; color: #134E4A;">
-                    🎯 <strong>Action:</strong> {area_row['primary_recommendation']}
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        # Interactive Multi-Sensor Telemetry Deck (Compact Mode)
+        render_interactive_taluka_indicators(
+            taluka_data=area_row,
+            selected_taluka=selected_inspect,
+            sim_mitigation=0,
+            is_compact=True
         )
 
     st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)

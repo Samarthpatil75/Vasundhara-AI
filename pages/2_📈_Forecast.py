@@ -18,6 +18,7 @@ from src.utils import (
 )
 from src.components import (
     render_header,
+    render_kpi_card,
     render_takeaway,
     render_footer,
     get_risk_badge_html
@@ -100,29 +101,57 @@ def main():
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        st.metric("Forecast Horizon", max_forecast_date.strftime("%B %Y"), delta=f"+{forecast_window} Months Lead")
+        render_kpi_card(
+            title="Forecast Horizon",
+            value=max_forecast_date.strftime("%b %Y"),
+            delta=f"+{forecast_window} Mo Lead",
+            subtext=f"AI projection through {max_forecast_date.strftime('%B %Y')}",
+            alert_color=COLOR_THEME["teal_primary"],
+            badge_text="Prediction Lead"
+        )
     with c2:
         if hz_row is not None:
-            st.metric(
-                f"{hazards_to_plot[0]} Projected Risk",
-                f"{hz_row['risk_score']*100:.1f}%",
+            score_text = f"{hz_row['risk_score']*100:.1f}%"
+            alert_c = RISK_COLORS["High"] if hz_row['risk_level'] == "High" else (RISK_COLORS["Medium"] if hz_row['risk_level'] == "Medium" else COLOR_THEME["teal_primary"])
+            render_kpi_card(
+                title=f"{hazards_to_plot[0]} Risk",
+                value=score_text,
                 delta=f"Alert: {hz_row['risk_level']}",
-                delta_color="inverse" if hz_row['risk_level'] == "High" else "normal"
+                subtext=f"AI model predicted hazard score ({hz_row['risk_level']})",
+                alert_color=alert_c,
+                badge_text="Ensemble ML"
             )
         else:
-            st.metric("Projected Risk", "N/A")
+            render_kpi_card("Projected Risk", "N/A", subtext="Data unavailable", badge_text="N/A")
     with c3:
         if hz_row is not None:
-            st.metric("95% Confidence Band", f"{hz_row['risk_lower_ci']*100:.0f}% – {hz_row['risk_upper_ci']*100:.0f}%", delta="Empirical Bayes")
+            band_text = f"{hz_row['risk_lower_ci']*100:.0f}% – {hz_row['risk_upper_ci']*100:.0f}%"
+            render_kpi_card(
+                title="95% Confidence Band",
+                value=band_text,
+                delta="Empirical Bayes",
+                subtext="Upper & lower uncertainty bounds",
+                alert_color=COLOR_THEME["teal_dark"],
+                badge_text="95% CI"
+            )
         else:
-            st.metric("Confidence Band", "N/A")
+            render_kpi_card("Confidence Band", "N/A", subtext="Data unavailable", badge_text="N/A")
     with c4:
         dist_hz = district_avg[(district_avg["date"] == max_forecast_date) & (district_avg["hazard_type"] == hazards_to_plot[0])]
         if not dist_hz.empty and hz_row is not None:
             diff = (hz_row["risk_score"] - dist_hz["risk_score"].iloc[0]) * 100
-            st.metric("vs Pune District Mean", f"{dist_hz['risk_score'].iloc[0]*100:.1f}%", delta=f"{diff:+.1f}% vs Mean", delta_color="inverse" if diff > 0 else "normal")
+            diff_text = f"{diff:+.1f}% vs Mean"
+            alert_c = RISK_COLORS["High"] if diff > 5 else COLOR_THEME["teal_primary"]
+            render_kpi_card(
+                title="vs District Mean",
+                value=f"{dist_hz['risk_score'].iloc[0]*100:.1f}%",
+                delta=diff_text,
+                subtext="Relative comparison against 16-taluka average",
+                alert_color=alert_c,
+                badge_text="District Avg"
+            )
         else:
-            st.metric("vs District Mean", "N/A")
+            render_kpi_card("vs District Mean", "N/A", subtext="Data unavailable", badge_text="N/A")
 
     st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 

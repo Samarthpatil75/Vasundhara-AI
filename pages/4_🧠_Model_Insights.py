@@ -95,15 +95,15 @@ def main():
 
     c1, c2, c3, c4, c5 = st.columns(5)
     with c1:
-        render_kpi_card("Overall Accuracy", f"{acc:.1f}%", delta="Stratified CV", alert_color=COLOR_THEME["teal_primary"], badge_text="Top 10%")
+        render_kpi_card("Overall Accuracy", f"{acc:.1f}%", delta="Stratified CV", subtext="Validation accuracy across 5-fold cross validation", alert_color=COLOR_THEME["teal_primary"], badge_text="Top 10%")
     with c2:
-        render_kpi_card("Macro Precision", f"{prec:.1f}%", delta="Low False Positives", alert_color=COLOR_THEME["teal_dark"], badge_text="Precision")
+        render_kpi_card("Macro Precision", f"{prec:.1f}%", delta="Low False Alarms", subtext="Reliability in confirming genuine hazard spikes", alert_color=COLOR_THEME["teal_dark"], badge_text="Precision")
     with c3:
-        render_kpi_card("Macro Recall", f"{rec:.1f}%", delta="High Sensitivity", alert_color=COLOR_THEME["teal_primary"], badge_text="Recall")
+        render_kpi_card("Macro Recall", f"{rec:.1f}%", delta="High Sensitivity", subtext="Detection coverage of true extreme climate events", alert_color=COLOR_THEME["teal_primary"], badge_text="Recall")
     with c4:
-        render_kpi_card("Macro F1-Score", f"{f1:.1f}%", delta="Balanced", alert_color=COLOR_THEME["emerald"], badge_text="F1 Target")
+        render_kpi_card("Macro F1-Score", f"{f1:.1f}%", delta="Balanced Metric", subtext="Harmonic balance between precision & recall", alert_color=COLOR_THEME["emerald"], badge_text="F1 Target")
     with c5:
-        render_kpi_card("ROC-AUC Score", f"{auc:.1f}%", delta="High Separability", alert_color=COLOR_THEME["teal_primary"], badge_text="AUC-ROC")
+        render_kpi_card("ROC-AUC Score", f"{auc:.1f}%", delta="High Separability", subtext="Discrimination between severity danger classes", alert_color=COLOR_THEME["teal_primary"], badge_text="AUC-ROC")
 
     st.markdown("<div style='height: 18px;'></div>", unsafe_allow_html=True)
 
