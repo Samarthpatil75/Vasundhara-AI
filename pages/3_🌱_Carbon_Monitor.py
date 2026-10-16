@@ -223,58 +223,7 @@ def main():
         f"Rapid built infrastructure has driven {top_loss.iloc[0]['area_name']} to lose {abs(top_loss.iloc[0]['veg_change_pct']):.1f}% of its vegetation canopy, accelerating the localized Urban Heat Island."
     )
 
-    st.markdown("<div style='height: 18px;'></div>", unsafe_allow_html=True)
-
-    # 3. INTERACTIVE PUNE CARBON OFFSET & TREE PLANTING CALCULATOR
-    st.markdown("### 🌲 Interactive Pune Carbon Offset & Tree Planting Calculator")
-    st.caption("Calculate the exact reforestation footprint required to neutralize carbon deficits across Pune district.")
-
-    calc_c1, calc_c2 = st.columns([1.2, 1.8])
-
-    with calc_c1:
-        with st.container(border=True):
-            st.markdown("##### 🎯 Define Offset Objective")
-            target_tco2e = st.slider(
-                "Target Carbon Offset Goal (tCO₂e)",
-                min_value=1_000,
-                max_value=100_000,
-                value=25_000,
-                step=5_000,
-                format="%d tCO₂e"
-            )
-            forest_mode = st.selectbox(
-                "Restoration Strategy",
-                options=[
-                    "🌿 Western Ghats Native Corridor (Velhe/Mulshi)",
-                    "🏙️ Urban Miyawaki Pocket Forest (PMC/PCMC)",
-                    "💧 Riverbank Riparian Buffer (Mula-Mutha)"
-                ],
-                index=0
-            )
-
-    # Calculation logic (IPCC Tier 1 baseline)
-    trees_needed = int(target_tco2e / 0.022)  # avg 22kg CO2/tree/yr mature
-    hectares_needed = (trees_needed / 2500) if "Miyawaki" not in forest_mode else (trees_needed / 10000)
-    water_absorbed_m3 = trees_needed * 0.15
-
-    with calc_c2:
-        with st.container(border=True):
-            st.markdown("##### 📊 Required Restoration Footprint")
-            r1, r2, r3 = st.columns(3)
-            with r1:
-                st.metric("Native Trees to Plant", f"{trees_needed:,.0f}", delta="Saplings Required")
-            with r2:
-                st.metric("Land Area Needed", f"{hectares_needed:,.1f} ha", delta=f"{hectares_needed*2.471:.1f} Acres")
-            with r3:
-                st.metric("Rainwater Retained", f"{water_absorbed_m3/1000:,.1f} ML", delta="Annual Runoff")
-
-            st.info(
-                f"🌱 Planting **{trees_needed:,.0f} trees** across **{hectares_needed:,.1f} hectares** in Pune will achieve full payback of **{target_tco2e:,.0f} tCO₂e** within 12 months of canopy maturity."
-            )
-
-    st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
-
-    # 4. Assumptions Expander
+    # 3. Assumptions Expander
     with st.expander("📖 Click to inspect IPCC Tier 1 & Global Forest Watch Model Assumptions"):
         st.markdown(
             """

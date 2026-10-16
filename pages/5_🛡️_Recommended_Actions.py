@@ -199,7 +199,7 @@ def main():
 
             act_df = pd.DataFrame(actions)
             act_df.columns = ["Timeframe", "Intervention Action", "Lead Municipal Agency"]
-            st.dataframe(act_df, use_container_width=True, hide_index=True)
+            st.table(act_df)
 
     st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
 
