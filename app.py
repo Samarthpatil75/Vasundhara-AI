@@ -42,6 +42,8 @@ from src.components import (
 st.markdown("""
 <style>
     .block-container {
+        position: relative !important;
+        z-index: 1 !important;
         padding-top: 1.5rem;
         padding-bottom: 2.5rem;
     }

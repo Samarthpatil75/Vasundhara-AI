@@ -11,31 +11,123 @@ from src.utils import COLOR_THEME, RISK_COLORS, RISK_BG_COLORS, DESIGNATED_DATAS
 
 
 def render_header(title: str = "ClimateSense", subtitle: str = "AI-Driven Climate Risk & Carbon Monitoring | Pune District"):
-    """Renders top header badge with Pune district tag and live status."""
+    """
+    Renders top header badge with Pune district tag, live status,
+    and seamlessly injects the Aceternity Aurora Background animation across the website.
+    """
     html = textwrap.dedent(f"""
-<div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E2E8F0; padding-bottom: 12px; margin-bottom: 18px;">
-    <div>
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 26px;">🌍</span>
-            <h1 style="margin: 0; font-size: 26px; font-weight: 800; color: #0F172A; letter-spacing: -0.5px; font-family: Inter, sans-serif;">
-                {title}
-            </h1>
-            <span style="background: #E6FFFA; color: #0D9488; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 9999px; border: 1px solid #99F6E4; text-transform: uppercase;">
-                DataMeet Boundaries • Pune District
+    <style>
+        @keyframes aurora-flow {{
+            from {{
+                background-position: 50% 50%, 50% 50%;
+            }}
+            to {{
+                background-position: 350% 50%, 350% 50%;
+            }}
+        }}
+
+        [data-testid="stAppViewContainer"] {{
+            background-color: #FAFAFA !important;
+            position: relative !important;
+            overflow-x: hidden !important;
+        }}
+
+        /* Aceternity Aurora Background Layer 1: Ethereal Aurora Wave */
+        [data-testid="stAppViewContainer"]::before {{
+            content: "" !important;
+            position: fixed !important;
+            top: -10px !important;
+            left: -10px !important;
+            right: -10px !important;
+            bottom: -10px !important;
+            opacity: 0.42 !important;
+            filter: blur(14px) invert(1) !important;
+            will-change: transform, background-position !important;
+            pointer-events: none !important;
+            z-index: 0 !important;
+            background-image: 
+                repeating-linear-gradient(100deg, #ffffff 0%, #ffffff 7%, transparent 10%, transparent 12%, #ffffff 16%),
+                repeating-linear-gradient(100deg, #3b82f6 10%, #a5b4fc 15%, #0ea5e9 20%, #ddd6fe 25%, #60a5fa 30%) !important;
+            background-size: 300% 200% !important;
+            background-position: 50% 50%, 50% 50% !important;
+            -webkit-mask-image: radial-gradient(ellipse at 100% 0%, black 10%, transparent 70%) !important;
+            mask-image: radial-gradient(ellipse at 100% 0%, black 10%, transparent 70%) !important;
+            animation: aurora-flow 60s linear infinite !important;
+        }}
+
+        /* Aceternity Aurora Background Layer 2: Counter-flow Ambient Lights */
+        [data-testid="stAppViewContainer"]::after {{
+            content: "" !important;
+            position: fixed !important;
+            top: -10px !important;
+            left: -10px !important;
+            right: -10px !important;
+            bottom: -10px !important;
+            opacity: 0.32 !important;
+            filter: blur(16px) invert(1) !important;
+            will-change: transform, background-position !important;
+            pointer-events: none !important;
+            z-index: 0 !important;
+            background-image: 
+                repeating-linear-gradient(100deg, #ffffff 0%, #ffffff 7%, transparent 10%, transparent 12%, #ffffff 16%),
+                repeating-linear-gradient(100deg, #0d9488 10%, #38bdf8 15%, #818cf8 20%, #c084fc 25%, #2dd4bf 30%) !important;
+            background-size: 200% 100% !important;
+            background-attachment: fixed !important;
+            mix-blend-mode: difference !important;
+            animation: aurora-flow 45s linear infinite reverse !important;
+        }}
+
+        .block-container {{
+            position: relative !important;
+            z-index: 1 !important;
+            padding-top: 1.4rem !important;
+            padding-bottom: 3rem !important;
+        }}
+
+        /* Frosted Glass Container Cards for Pristine Readability */
+        div[data-testid="stMetric"],
+        div[data-testid="stVerticalBlockBorderWrapper"] > div {{
+            background: rgba(255, 255, 255, 0.88) !important;
+            backdrop-filter: blur(14px) !important;
+            -webkit-backdrop-filter: blur(14px) !important;
+            border: 1px solid rgba(226, 232, 240, 0.9) !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 20px -2px rgba(15, 118, 110, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02) !important;
+            transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+        }}
+
+        div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {{
+            transform: translateY(-2px) !important;
+            box-shadow: 0 10px 25px -3px rgba(13, 148, 136, 0.12), 0 4px 6px -2px rgba(0, 0, 0, 0.04) !important;
+        }}
+    </style>
+
+    <div style="background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(226, 232, 240, 0.9); border-radius: 14px; padding: 14px 20px; margin-bottom: 18px; box-shadow: 0 4px 20px -2px rgba(15, 118, 110, 0.06); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span style="font-size: 26px;">🌍</span>
+                <h1 style="margin: 0; font-size: 25px; font-weight: 800; color: #0F172A; letter-spacing: -0.5px; font-family: Inter, sans-serif;">
+                    {title}
+                </h1>
+                <span style="background: #E6FFFA; color: #0D9488; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 9999px; border: 1px solid #99F6E4; text-transform: uppercase;">
+                    DataMeet Boundaries • Pune District
+                </span>
+                <span style="background: #EEF2FF; color: #4F46E5; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 9999px; border: 1px solid #C7D2FE;">
+                    ✨ Aurora Atmosphere Active
+                </span>
+            </div>
+            <p style="margin: 4px 0 0 0; color: #64748B; font-size: 13.5px; font-weight: 400;">
+                {subtitle}
+            </p>
+        </div>
+        <div style="text-align: right;">
+            <span style="display: inline-flex; align-items: center; gap: 6px; background: #FEF3C7; color: #92400E; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px; border: 1px solid #FDE68A;">
+                <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #D97706;"></span>
+                Sample Baseline Mode
             </span>
         </div>
-        <p style="margin: 4px 0 0 0; color: #64748B; font-size: 13.5px; font-weight: 400;">
-            {subtitle}
-        </p>
     </div>
-    <div style="text-align: right;">
-        <span style="display: inline-flex; align-items: center; gap: 6px; background: #FEF3C7; color: #92400E; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px; border: 1px solid #FDE68A;">
-            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #D97706;"></span>
-            Sample Baseline Mode
-        </span>
-    </div>
-</div>
-""")
+    """)
     st.markdown(html, unsafe_allow_html=True)
 
 
