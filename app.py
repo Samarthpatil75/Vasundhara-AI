@@ -2,7 +2,8 @@
 app.py - ClimateSense: AI-driven Climate Risk + Carbon Monitoring Dashboard
 Main Landing & Overview Page for Pune District, Maharashtra, India.
 Designed for Hackathon Judges: Fast loading, visual clarity, presentation-ready.
-Features interactive season toggles, real-time Taluka Spotlight, and What-If Action Simulator.
+Features interactive atmospheric background, real-time Telemetry HUD, Taluka Spotlight,
+Pune Micro-Zone Explorer, and the Climate Action Sandbox.
 """
 
 import streamlit as st
@@ -31,42 +32,15 @@ from src.utils import (
 )
 from src.components import (
     render_header,
+    render_climate_telemetry_hud,
+    render_pune_microzone_explorer,
+    render_climate_action_sandbox,
     render_kpi_card,
     render_takeaway,
     render_footer,
     get_risk_badge_html,
     create_risk_gauge
 )
-
-# Custom Clean CSS
-st.markdown("""
-<style>
-    .block-container {
-        padding-top: 1.5rem;
-        padding-bottom: 2.5rem;
-    }
-    /* Metric Card Modern Styling */
-    div[data-testid="stMetricValue"] {
-        font-size: 26px !important;
-        font-weight: 800 !important;
-    }
-    /* Clean Radio buttons */
-    div[role="radiogroup"] {
-        background-color: #F1F5F9;
-        padding: 4px;
-        border-radius: 8px;
-    }
-    /* Tabs */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        border-radius: 6px;
-        font-weight: 600;
-        padding: 8px 16px;
-    }
-</style>
-""", unsafe_allow_html=True)
 
 
 def main():
@@ -79,13 +53,14 @@ def main():
         st.warning("Data files are loading or not found in /data. Please verify CSV files.")
         return
 
-    # Clean Header
+    # 1. Atmospheric Header & Live Telemetry HUD
     render_header(
         title="ClimateSense",
         subtitle="AI-driven Climate Risk + Carbon Monitoring for Pune District | 16 DataMeet Talukas"
     )
+    render_climate_telemetry_hud()
 
-    # 1. INTERACTIVE SCENARIO & SEASON SELECTOR (Inline right at the top!)
+    # 2. INTERACTIVE SCENARIO & SEASON SELECTOR
     st.markdown("### 🎛️ Select Climate Observation Scenario")
     scenario_col1, scenario_col2 = st.columns([1.6, 1])
 
@@ -121,7 +96,7 @@ def main():
 
     st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
 
-    # 2. THE 4 REFINED, CLEAR KPI CARDS
+    # 3. THE 4 REFINED, CLEAR KPI CARDS
     kpis = compute_overview_kpis(df_risk, df_ndvi, selected_hazard=selected_hazard, selected_date=selected_date)
 
     c1, c2, c3, c4 = st.columns(4)
@@ -174,7 +149,7 @@ def main():
 
     st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
 
-    # 3. INTERACTIVE TALUKA SPOTLIGHT (The core user-friendly feature!)
+    # 4. INTERACTIVE TALUKA SPOTLIGHT & SIMULATOR
     st.markdown("### 🔍 Interactive Taluka Diagnosis & Simulator")
     
     slice_df = df_risk[df_risk["date"] == selected_date]
@@ -238,14 +213,14 @@ def main():
         # Top factors & Prescribed Action
         st.markdown(
             f"""
-            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 16px; margin-top: 10px;">
+            <div style="background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 16px; margin-top: 10px;">
                 <div style="font-size: 12px; font-weight: 700; color: #0F172A; margin-bottom: 4px;">
                     📌 Top Risk Drivers:
                 </div>
                 <div style="font-size: 12px; color: #334155;">
                     1. <strong>{taluka_data['top_factor_1']}</strong> &nbsp;|&nbsp; 2. <strong>{taluka_data['top_factor_2']}</strong>
                 </div>
-                <div style="background: #F0FDFA; border-left: 3px solid #0D9488; padding: 8px 12px; border-radius: 4px; margin-top: 8px; font-size: 12.5px; color: #134E4A;">
+                <div style="background: rgba(240, 253, 250, 0.9); border-left: 3px solid #0D9488; padding: 8px 12px; border-radius: 4px; margin-top: 8px; font-size: 12.5px; color: #134E4A;">
                     🎯 <strong>Prescribed Municipal Action:</strong> {taluka_data['primary_recommendation']}
                 </div>
             </div>
@@ -253,9 +228,19 @@ def main():
             unsafe_allow_html=True
         )
 
-    st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
 
-    # 4. DISTRICT RISK RANKING (Clean & Interactive)
+    # 5. INTERACTIVE PUNE MICRO-CLIMATE EXPLORER (Beyond dry numbers!)
+    render_pune_microzone_explorer()
+
+    st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
+
+    # 6. INTERACTIVE CLIMATE ACTION SANDBOX & LAB
+    render_climate_action_sandbox()
+
+    st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
+
+    # 7. DISTRICT RISK RANKING (Clean & Interactive)
     st.markdown(f"### 📊 Full District Vulnerability Ranking ({kpis['latest_date_str']})")
 
     ranking_df = slice_df.groupby("area_name").agg({
@@ -290,7 +275,7 @@ def main():
 
     st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
 
-    # 5. STREAMLINED HOW IT WORKS & VERIFIED DATA FEEDS EXPANDER
+    # 8. STREAMLINED HOW IT WORKS & VERIFIED DATA FEEDS EXPANDER
     with st.expander("ℹ️ Click to view the 10 Verified Datasets & System Architecture"):
         st.markdown(
             """

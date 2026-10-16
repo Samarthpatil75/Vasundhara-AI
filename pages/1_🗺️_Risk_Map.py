@@ -228,7 +228,7 @@ def main():
         # Compact details card
         st.markdown(
             f"""
-            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 16px;">
+            <div style="background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(14px); border: 1px solid rgba(226, 232, 240, 0.95); border-radius: 12px; padding: 14px 18px; box-shadow: 0 4px 18px rgba(15, 118, 110, 0.06);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <div>
                         <strong style="color: #0F172A; font-size: 14px;">{area_row['area_name']}</strong>
